@@ -1,0 +1,6 @@
+{
+  "name": "Poro-Analist",
+  "description": "An analytical draft and tactics assistant for League of Legends that recommends champions, runes, and builds based on match data.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
