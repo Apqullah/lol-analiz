@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Swords, BarChart2 } from "lucide-react";
+import { Swords, BarChart2, Settings, X } from "lucide-react";
 import { DraftForm, DraftResult, DraftState, ChampionCardsForm, ChampionSuggestion } from "./components";
 import { ProfileAnalytics } from "./ProfileAnalytics";
 
@@ -68,6 +68,8 @@ function DraftAssistantModule({ onBack }: { onBack: () => void }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-riot-api-key": localStorage.getItem("riotApiKey") || "",
+          "x-gemini-api-key": localStorage.getItem("geminiApiKey") || "",
         },
         body: JSON.stringify(state),
       });
@@ -170,8 +172,68 @@ function DraftAssistantModule({ onBack }: { onBack: () => void }) {
   );
 }
 
+function SettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [riotKey, setRiotKey] = useState(localStorage.getItem("riotApiKey") || "");
+  const [geminiKey, setGeminiKey] = useState(localStorage.getItem("geminiApiKey") || "");
+
+  if (!isOpen) return null;
+
+  const handleSave = () => {
+    localStorage.setItem("riotApiKey", riotKey);
+    localStorage.setItem("geminiApiKey", geminiKey);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+      <div className="hextech-panel p-6 md:p-8 max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex justify-between items-center mb-6 border-b border-[#785a28] pb-4">
+          <h2 className="text-xl font-bold text-[#c8aa6e] uppercase tracking-wider flex items-center gap-2">
+            <Settings className="w-5 h-5" /> API Ayarları
+          </h2>
+          <button onClick={onClose} className="text-[#0397ab] hover:text-[#c8aa6e] transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-[#0397ab] mb-2 uppercase">Riot API Key</label>
+            <input 
+              type="password" 
+              value={riotKey}
+              onChange={(e) => setRiotKey(e.target.value)}
+              placeholder="RGAPI-..." 
+              className="w-full px-4 py-3 hextech-input"
+            />
+            <p className="text-xs text-[#f0e6d2]/50 mt-1">Geliştirici portalından aldığınız Riot API anahtarı.</p>
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-[#0397ab] mb-2 uppercase">Gemini API Key</label>
+            <input 
+              type="password" 
+              value={geminiKey}
+              onChange={(e) => setGeminiKey(e.target.value)}
+              placeholder="AIza..." 
+              className="w-full px-4 py-3 hextech-input"
+            />
+            <p className="text-xs text-[#f0e6d2]/50 mt-1">Google AI Studio'dan aldığınız Gemini API anahtarı.</p>
+          </div>
+          <button 
+            onClick={handleSave}
+            className="w-full mt-4 px-4 py-3 bg-[#0a1428] hover:bg-[#c8aa6e]/20 text-[#c8aa6e] border border-[#c8aa6e] font-bold transition-all uppercase tracking-wider"
+          >
+            Kaydet
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [currentModule, setCurrentModule] = useState<string>('main');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
     <div 
@@ -185,7 +247,18 @@ export default function App() {
     >
       <div className="absolute inset-0 bg-[#091428]/85 backdrop-blur-[2px] z-0 pointer-events-none"></div>
       
-      <main className="relative z-10 flex-1 p-4 md:py-12 text-[#f0e6d2]">
+      <div className="relative z-20 flex justify-end p-4">
+        <button 
+          onClick={() => setIsSettingsOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-[#091428]/80 hover:bg-[#c8aa6e]/20 border border-[#785a28] hover:border-[#c8aa6e] text-[#0397ab] hover:text-[#c8aa6e] transition-colors rounded-md font-bold text-sm uppercase"
+        >
+          <Settings className="w-4 h-4" /> API Ayarları
+        </button>
+      </div>
+
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
+      <main className="relative z-10 flex-1 p-4 md:py-8 text-[#f0e6d2]">
         {currentModule === 'main' && <MainMenu onSelect={setCurrentModule} />}
         {currentModule === 'draft' && <DraftAssistantModule onBack={() => setCurrentModule('main')} />}
         {currentModule === 'profile' && <ProfileAnalytics onBack={() => setCurrentModule('main')} />}

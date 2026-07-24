@@ -26,8 +26,7 @@ async function fetchChampionMap() {
   }
 }
 
-async function getPlayerTopChampions(riotId: string): Promise<string[]> {
-  const riotApiKey = process.env.RIOT_API_KEY;
+async function getPlayerTopChampions(riotId: string, riotApiKey: string): Promise<string[]> {
   if (!riotApiKey) return [];
   
   try {
@@ -70,11 +69,11 @@ async function startServer() {
   app.post("/api/profile", async (req, res) => {
     try {
       const { server, riotId, tagline } = req.body;
-      const riotApiKey = process.env.RIOT_API_KEY;
-      const geminiApiKey = process.env.GEMINI_API_KEY;
+      const riotApiKey = req.headers['x-riot-api-key'] as string || process.env.RIOT_API_KEY;
+      const geminiApiKey = req.headers['x-gemini-api-key'] as string || process.env.GEMINI_API_KEY;
 
-      if (!riotApiKey) return res.status(500).json({ error: "RIOT_API_KEY is not set." });
-      if (!geminiApiKey) return res.status(500).json({ error: "GEMINI_API_KEY is not set." });
+      if (!riotApiKey) return res.status(400).json({ error: "Riot API Key eksik. Lütfen API Ayarları menüsünden anahtarınızı girin." });
+      if (!geminiApiKey) return res.status(400).json({ error: "Gemini API Key eksik. Lütfen API Ayarları menüsünden anahtarınızı girin." });
 
       const SERVER_MAP: Record<string, { region: string; platform: string }> = {
         TR: { region: "europe", platform: "tr1" },
@@ -224,9 +223,11 @@ Not: Cevabını doğrudan markdown olarak ver, HTML veya ekstra kod bloğu kulla
     try {
       const { bans, role, enemyPicks, allyPicks, riotId, selectedChampion } = req.body;
       
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = req.headers['x-gemini-api-key'] as string || process.env.GEMINI_API_KEY;
+      const riotApiKey = req.headers['x-riot-api-key'] as string || process.env.RIOT_API_KEY;
+
       if (!apiKey) {
-        return res.status(500).json({ error: "GEMINI_API_KEY is not set." });
+        return res.status(400).json({ error: "Gemini API Key eksik. Lütfen API Ayarları menüsünden anahtarınızı girin." });
       }
 
       const ai = new GoogleGenAI({ apiKey });
@@ -337,8 +338,8 @@ Lütfen KESİNLİKLE şu HTML yapısını kullanarak profesyonel bir Dashboard o
 `;
 
       let playerContext = "";
-      if (riotId) {
-        const topChamps = await getPlayerTopChampions(riotId);
+      if (riotId && riotApiKey) {
+        const topChamps = await getPlayerTopChampions(riotId, riotApiKey);
         if (topChamps.length > 0) {
           playerContext = `\n\nEk Bilgi: Kullanıcının Riot API'den çekilen en iyi oynadığı (en yüksek ustalık puanına sahip) şampiyonlar şunlardır: ${topChamps.join(", ")}. Mümkünse drafta uyuyorsa bu şampiyonlardan birini önermeyi veya alternatif olarak sunmayı düşün.`;
         }

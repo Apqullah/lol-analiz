@@ -45,7 +45,11 @@ export function ProfileAnalytics({ onBack }: { onBack: () => void }) {
     try {
       const res = await fetch("/api/profile", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-riot-api-key": localStorage.getItem("riotApiKey") || "",
+          "x-gemini-api-key": localStorage.getItem("geminiApiKey") || "",
+        },
         body: JSON.stringify({ server, riotId, tagline }),
       });
       const data = await res.json();
